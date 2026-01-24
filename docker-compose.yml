@@ -1,0 +1,22 @@
+services:
+  devcontainer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/workspaces/project:cached
+      - ~/.ssh:/home/dev/.ssh:ro
+      - ~/.gitconfig:/home/dev/.gitconfig:ro
+      - ${SSH_AUTH_SOCK:-/dev/null}:/ssh-agent:ro
+    env_file:
+      - .env
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent
+      # Pass through from host if set
+      - ANTHROPIC_API_KEY
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    stdin_open: true
+    tty: true
+    command: sleep infinity

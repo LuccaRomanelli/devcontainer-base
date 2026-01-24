@@ -1,0 +1,8 @@
+# User-specific configuration
+.env
+
+# Project-specific dependencies (user customizes from template)
+project-dependencies.sh
+
+# User-specific Claude settings
+.claude/settings.local.json

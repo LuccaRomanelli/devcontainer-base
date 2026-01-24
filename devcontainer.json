@@ -1,0 +1,21 @@
+{
+  "name": "Dev Container Base",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "devcontainer",
+  "workspaceFolder": "/workspaces/project",
+  "postCreateCommand": "bash post-create.sh",
+  "postStartCommand": "[ \"${TMUX_AUTO_START:-true}\" = \"true\" ] && tmux new-session -d -s \"${TMUX_SESSION_NAME:-main}\" 2>/dev/null || true",
+  "remoteUser": "dev",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.profiles.linux": {
+          "zsh": {
+            "path": "/home/linuxbrew/.linuxbrew/bin/zsh"
+          }
+        }
+      }
+    }
+  }
+}
