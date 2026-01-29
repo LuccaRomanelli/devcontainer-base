@@ -3,6 +3,41 @@ set -e
 
 echo "==> Setting up development environment..."
 
+# Cleanup function for error handling
+cleanup_on_failure() {
+    local exit_code=$?
+    if [ $exit_code -ne 0 ]; then
+        echo ""
+        echo "=========================================="
+        echo "  ERROR: Setup failed with exit code $exit_code"
+        echo "=========================================="
+        echo ""
+        echo "Check the logs above for details."
+    fi
+    exit $exit_code
+}
+trap cleanup_on_failure EXIT
+
+# Wait for network connectivity
+wait_for_network() {
+    local max_attempts=10
+    local attempt=1
+    echo "==> Checking network connectivity..."
+    while [ $attempt -le $max_attempts ]; do
+        if ping -c 1 -W 2 8.8.8.8 &>/dev/null; then
+            echo "    Network is available."
+            return 0
+        fi
+        echo "    Waiting for network... (attempt $attempt/$max_attempts)"
+        sleep 2
+        attempt=$((attempt + 1))
+    done
+    echo "    WARNING: Network check failed after $max_attempts attempts. Continuing anyway..."
+    return 0
+}
+
+wait_for_network
+
 # Load .env file if it exists
 if [ -f ".env" ]; then
     echo "==> Loading user configuration from .env..."
@@ -11,15 +46,31 @@ if [ -f ".env" ]; then
     set +a
 fi
 
-# Homebrew e mise
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-
-# Mise setup
-if [ -f "mise.toml" ] && [ "${MISE_AUTO_TRUST:-true}" = "true" ]; then
-    echo "==> Trusting mise.toml..."
-    mise trust
+# Homebrew setup with verification
+if [ -x "/home/linuxbrew/.linuxbrew/bin/brew" ]; then
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+else
+    echo "ERROR: Homebrew not found at /home/linuxbrew/.linuxbrew/bin/brew"
+    echo "The container may not have been built correctly."
+    exit 1
 fi
-eval "$(mise activate bash)"
+
+# Mise setup with verification and fallback
+if command -v mise &>/dev/null; then
+    if [ -f "mise.toml" ] && [ "${MISE_AUTO_TRUST:-true}" = "true" ]; then
+        echo "==> Trusting mise.toml..."
+        mise trust
+    fi
+    eval "$(mise activate bash)"
+else
+    echo "WARNING: mise not found. Attempting to install via Homebrew..."
+    if brew install mise; then
+        eval "$(mise activate bash)"
+    else
+        echo "ERROR: Failed to install mise."
+        exit 1
+    fi
+fi
 
 # Git configuration (if provided via env vars)
 if [ -n "$GIT_USER_NAME" ]; then
@@ -72,6 +123,17 @@ if [ -n "$DOTFILES_REPO" ]; then
         fi
     done
     cd -
+
+    # Ensure brew and mise are in .zshrc after applying dotfiles
+    echo "==> Ensuring brew and mise are configured in .zshrc..."
+    if [ -f "$HOME/.zshrc" ]; then
+        if ! grep -q 'brew shellenv' "$HOME/.zshrc"; then
+            echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> "$HOME/.zshrc"
+        fi
+        if ! grep -q 'mise activate zsh' "$HOME/.zshrc"; then
+            echo 'eval "$(mise activate zsh)"' >> "$HOME/.zshrc"
+        fi
+    fi
 else
     echo "==> Skipping dotfiles (DOTFILES_REPO not set)"
 fi
@@ -95,6 +157,9 @@ if [ "$DEFAULT_SHELL" = "zsh" ] && [ -f /home/linuxbrew/.linuxbrew/bin/zsh ]; th
 elif [ "$DEFAULT_SHELL" = "bash" ]; then
     sudo chsh -s /bin/bash dev 2>/dev/null || true
 fi
+
+# Clear trap on successful completion
+trap - EXIT
 
 echo ""
 echo "=========================================="

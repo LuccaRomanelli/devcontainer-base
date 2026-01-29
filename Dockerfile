@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ruby \
     xclip \
     xsel \
+    iputils-ping \
     && rm -rf /var/lib/apt/lists/*
 
 # Locale
@@ -68,10 +69,11 @@ RUN brew install \
 # Node.js via mise
 ENV MISE_DATA_DIR=/home/dev/.local/share/mise
 ENV PATH="${MISE_DATA_DIR}/shims:${PATH}"
-RUN mise use --global node@20
+RUN mise use --global node@24
 
 # Claude Code CLI (instalador padrão)
 RUN curl -fsSL https://claude.ai/install.sh | sh
+ENV PATH="/home/dev/.claude/local/bin:${PATH}"
 
 # zsh + oh-my-zsh
 RUN brew install zsh \

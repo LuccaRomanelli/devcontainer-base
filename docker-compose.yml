@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    restart: "no"
     volumes:
       - .:/workspaces/project:cached
       - ~/.ssh:/home/dev/.ssh:ro
