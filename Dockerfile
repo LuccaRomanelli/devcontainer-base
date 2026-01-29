@@ -70,8 +70,8 @@ ENV MISE_DATA_DIR=/home/dev/.local/share/mise
 ENV PATH="${MISE_DATA_DIR}/shims:${PATH}"
 RUN mise use --global node@20
 
-# Claude Code CLI
-RUN npm install -g @anthropic-ai/claude-code
+# Claude Code CLI (instalador padrão)
+RUN curl -fsSL https://claude.ai/install.sh | sh
 
 # zsh + oh-my-zsh
 RUN brew install zsh \
