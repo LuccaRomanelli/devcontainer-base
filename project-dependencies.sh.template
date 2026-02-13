@@ -2,28 +2,48 @@
 # ============================================================
 # Project Dependencies Template
 # ============================================================
-# Copie este arquivo para project-dependencies.sh e customize
-# para instalar dependências específicas do seu projeto.
-#
-# Este script é executado automaticamente pelo post-create.sh
+# Copy this file to project-dependencies.sh and customize.
+# This script runs automatically via post-create.sh
 # ============================================================
 set -e
 
 echo "==> Installing project-specific dependencies..."
 
 # ------------------------------------------------------------
-# Runtimes via mise (recomendado)
+# Helper function for robust brew install (handles SIGPIPE)
+# ------------------------------------------------------------
+# Use this for any brew install that uses taps or might fail
+# in container environments with broken pipe errors.
+brew_install_safe() {
+    local package="$1"
+    local max_attempts=3
+    for attempt in $(seq 1 $max_attempts); do
+        if brew install "$package" 2>&1 | cat; then
+            return 0
+        fi
+        if brew list --formula | grep -q "$(basename "$package")" 2>/dev/null; then
+            return 0
+        fi
+        echo "    Attempt $attempt/$max_attempts failed, retrying..."
+        sleep 2
+    done
+    return 1
+}
+
+# ------------------------------------------------------------
+# Runtimes via mise (recommended)
 # ------------------------------------------------------------
 # mise use python@3.11
 # mise use node@20
 # mise use go@1.21
 
 # ------------------------------------------------------------
-# Pacotes via Homebrew
+# Packages via Homebrew
 # ------------------------------------------------------------
 # brew install sqlite
 # brew install postgresql@15
 # brew install redis
+# brew_install_safe supabase/tap/supabase  # Use for taps
 
 # ------------------------------------------------------------
 # Bibliotecas do Playwright (se necessário browser automation)

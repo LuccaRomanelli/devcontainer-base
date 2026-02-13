@@ -72,7 +72,7 @@ ENV PATH="${MISE_DATA_DIR}/shims:${PATH}"
 RUN mise use --global node@24
 
 # Claude Code CLI (instalador padrão)
-RUN curl -fsSL https://claude.ai/install.sh | sh
+RUN curl -fsSL https://claude.ai/install.sh | bash
 ENV PATH="/home/dev/.claude/local/bin:${PATH}"
 
 # zsh + oh-my-zsh
